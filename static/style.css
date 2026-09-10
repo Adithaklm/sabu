@@ -18,6 +18,14 @@ body {
 }
 h1 { margin: 0 0 8px; }
 .sub { color: #aeb3bd; margin-bottom: 24px; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.tab {
+  margin-top: 0;
+  background: #111318;
+  color: #bfc4cc;
+  border: 1px solid #3c4048;
+}
+.tab.active { background: #fff; color: #111; }
 .drop {
   display: block;
   padding: 34px 18px;
@@ -28,6 +36,19 @@ h1 { margin: 0 0 8px; }
   margin-bottom: 22px;
 }
 .drop input { display: none; }
+.urlLabel { display: block; margin-bottom: 6px; color: #cfd3da; font-size: 14px; }
+input[type=url] {
+  width: 100%;
+  margin-top: 7px;
+  padding: 13px;
+  border-radius: 10px;
+  border: 1px solid #3c4048;
+  background: #111318;
+  color: white;
+  outline: none;
+}
+input[type=url]:focus { border-color: #777; }
+.hint { color: #8f949d; font-size: 12px; margin: 8px 0 22px; }
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
