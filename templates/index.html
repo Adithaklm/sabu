@@ -10,13 +10,27 @@
   <main class="container">
     <section class="card">
       <h1>🎬 Online Video Encoder</h1>
-      <p class="sub">Upload a video, choose your settings, and encode with FFmpeg.</p>
+      <p class="sub">Upload a video or use a direct video URL, then encode with FFmpeg.</p>
+
+      <div class="tabs">
+        <button type="button" class="tab active" data-mode="file">📁 Upload File</button>
+        <button type="button" class="tab" data-mode="url">🔗 Direct URL</button>
+      </div>
 
       <form id="encoderForm">
-        <label class="drop">
-          <input id="file" name="file" type="file" accept="video/*" required>
-          <span id="fileText">📁 Choose a video</span>
-        </label>
+        <div id="fileMode">
+          <label class="drop">
+            <input id="file" name="file" type="file" accept="video/*">
+            <span id="fileText">📁 Choose a video</span>
+          </label>
+        </div>
+
+        <div id="urlMode" class="hidden">
+          <label class="urlLabel">Direct video URL
+            <input id="urlInput" name="url" type="url" placeholder="https://example.com/video.mp4" autocomplete="off">
+          </label>
+          <p class="hint">Use a direct video file link (.mp4, .mkv, .webm, etc.), not a normal webpage link.</p>
+        </div>
 
         <div class="grid">
           <label>Resolution
@@ -76,11 +90,25 @@
 const form = document.getElementById("encoderForm");
 const fileInput = document.getElementById("file");
 const fileText = document.getElementById("fileText");
+const urlInput = document.getElementById("urlInput");
+const fileMode = document.getElementById("fileMode");
+const urlMode = document.getElementById("urlMode");
+const tabs = document.querySelectorAll(".tab");
 const statusBox = document.getElementById("status");
 const progress = document.getElementById("progress");
 const progressInner = progress.querySelector("div");
 const btn = document.getElementById("encodeBtn");
 const download = document.getElementById("download");
+let mode = "file";
+
+tabs.forEach(tab => tab.addEventListener("click", () => {
+  mode = tab.dataset.mode;
+  tabs.forEach(t => t.classList.toggle("active", t === tab));
+  fileMode.classList.toggle("hidden", mode !== "file");
+  urlMode.classList.toggle("hidden", mode !== "url");
+  fileInput.required = mode === "file";
+  urlInput.required = mode === "url";
+}));
 
 fileInput.addEventListener("change", () => {
   fileText.textContent = fileInput.files[0]
@@ -90,20 +118,22 @@ fileInput.addEventListener("change", () => {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!fileInput.files[0]) return;
+  if (mode === "file" && !fileInput.files[0]) return;
+  if (mode === "url" && !urlInput.value.trim()) return;
 
   btn.disabled = true;
   download.classList.add("hidden");
   statusBox.classList.remove("hidden");
   progress.classList.remove("hidden");
-  progressInner.style.width = "20%";
-  statusBox.textContent = "Uploading video...";
+  progressInner.style.width = "15%";
+  statusBox.textContent = mode === "url" ? "Downloading video from URL..." : "Uploading video...";
 
   const data = new FormData(form);
+  if (mode === "file") data.delete("url");
+  if (mode === "url") data.delete("file");
 
   try {
     const response = await fetch("/encode", { method: "POST", body: data });
-
     progressInner.style.width = "75%";
     statusBox.textContent = "Encoding with FFmpeg...";
 
@@ -114,11 +144,9 @@ form.addEventListener("submit", async (e) => {
 
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
-
     download.href = url;
     download.download = "encoded_video.mp4";
     download.classList.remove("hidden");
-
     progressInner.style.width = "100%";
     statusBox.textContent = "✅ Encoding completed!";
   } catch (err) {
