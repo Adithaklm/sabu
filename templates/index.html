@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online Video Encoder</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>🎬 Online Video Encoder</h1>
+      <p class="sub">Upload a video, choose your settings, and encode with FFmpeg.</p>
+
+      <form id="encoderForm">
+        <label class="drop">
+          <input id="file" name="file" type="file" accept="video/*" required>
+          <span id="fileText">📁 Choose a video</span>
+        </label>
+
+        <div class="grid">
+          <label>Resolution
+            <select name="resolution">
+              <option value="1080p">1080p</option>
+              <option value="720p">720p</option>
+              <option value="480p">480p</option>
+              <option value="original">Original</option>
+            </select>
+          </label>
+
+          <label>Codec
+            <select name="codec">
+              <option value="h264">H.264</option>
+              <option value="h265">H.265 / HEVC</option>
+              <option value="vp9">VP9</option>
+            </select>
+          </label>
+
+          <label>CRF
+            <input name="crf" type="number" min="0" max="51" value="23">
+          </label>
+
+          <label>Preset
+            <select name="preset">
+              <option>ultrafast</option>
+              <option>superfast</option>
+              <option>veryfast</option>
+              <option>faster</option>
+              <option>fast</option>
+              <option selected>medium</option>
+              <option>slow</option>
+            </select>
+          </label>
+
+          <label>Audio bitrate
+            <select name="audio_bitrate">
+              <option>96k</option>
+              <option selected>128k</option>
+              <option>160k</option>
+              <option>192k</option>
+              <option>256k</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="encodeBtn" type="submit">🚀 Encode Video</button>
+      </form>
+
+      <div id="status" class="status hidden"></div>
+      <div id="progress" class="bar hidden"><div></div></div>
+      <a id="download" class="download hidden">⬇️ Download Encoded Video</a>
+    </section>
+  </main>
+
+<script>
+const form = document.getElementById("encoderForm");
+const fileInput = document.getElementById("file");
+const fileText = document.getElementById("fileText");
+const statusBox = document.getElementById("status");
+const progress = document.getElementById("progress");
+const progressInner = progress.querySelector("div");
+const btn = document.getElementById("encodeBtn");
+const download = document.getElementById("download");
+
+fileInput.addEventListener("change", () => {
+  fileText.textContent = fileInput.files[0]
+    ? "🎞️ " + fileInput.files[0].name
+    : "📁 Choose a video";
+});
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!fileInput.files[0]) return;
+
+  btn.disabled = true;
+  download.classList.add("hidden");
+  statusBox.classList.remove("hidden");
+  progress.classList.remove("hidden");
+  progressInner.style.width = "20%";
+  statusBox.textContent = "Uploading video...";
+
+  const data = new FormData(form);
+
+  try {
+    const response = await fetch("/encode", { method: "POST", body: data });
+
+    progressInner.style.width = "75%";
+    statusBox.textContent = "Encoding with FFmpeg...";
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    download.href = url;
+    download.download = "encoded_video.mp4";
+    download.classList.remove("hidden");
+
+    progressInner.style.width = "100%";
+    statusBox.textContent = "✅ Encoding completed!";
+  } catch (err) {
+    statusBox.textContent = "❌ " + err.message;
+    progressInner.style.width = "0%";
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
