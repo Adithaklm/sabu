@@ -26,7 +26,11 @@ ALLOWED_PRESETS = {"ultrafast", "superfast", "veryfast", "faster", "fast", "medi
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"request": request},
+    )
 
 @app.post("/encode")
 async def encode(
@@ -99,8 +103,6 @@ async def encode(
             background=None,
         )
     finally:
-        # Remove input immediately. Output is removed after response by a
-        # lightweight cleanup task in the next event-loop cycle.
         input_path.unlink(missing_ok=True)
         asyncio.create_task(cleanup_later(output_path))
 
